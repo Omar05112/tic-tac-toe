@@ -60,14 +60,13 @@ function Gameboard() {
   }
 
   const resetBoard = () => {
-    const emptyCell = Cell();
-    emptyCell.addToken(0);
     for (let i = 0; i < rows; i++) {
       board[i] = [];
       for (let j = 0; j < columns; j++) {
-        board[i][j] = emptyCell;
+        board[i][j] = Cell();
       }
     }
+    console.log("restarting...");
   };
   // This will be the method of getting the entire board that our
   // UI will eventually need to render it.
@@ -99,7 +98,15 @@ function Gameboard() {
 
   // Here, we provide an interface for the rest of our
   // application to interact with the board
-  return { getBoard, placeToken, printBoard, resetBoard, winningCombos };
+  return {
+    getBoard,
+    placeToken,
+    printBoard,
+    resetBoard,
+    winningCombos,
+    rows,
+    columns,
+  };
 }
 
 /*
@@ -110,7 +117,7 @@ function Gameboard() {
  */
 
 function Cell() {
-  let value = 0;
+  let value = "";
 
   // Accept a player's token to change the value of the cell
   const addToken = (player) => {
@@ -174,6 +181,18 @@ function GameController(
 
     if (invalid) return;
 
+    const checkForTie = () => {
+      if (
+        board
+          .getBoard()
+          .every((row) => row.every((cell) => cell.getValue() != ""))
+      ) {
+        console.log("It's a tie!");
+        return true;
+      }
+      return false;
+    };
+
     const checkForWin = () => {
       const array = board.getBoard();
       for (let i = 0; i < board.winningCombos.length; i++) {
@@ -188,7 +207,7 @@ function GameController(
             array[secondElement[0]][secondElement[1]].getValue() &&
           array[thirdElement[0]][thirdElement[1]].getValue() ==
             array[firstElement[0]][firstElement[1]].getValue() &&
-          array[firstElement[0]][firstElement[1]].getValue() !== 0
+          array[firstElement[0]][firstElement[1]].getValue() !== ""
         ) {
           console.log(`${getActivePlayer().name} wins`);
           return true;
@@ -198,13 +217,20 @@ function GameController(
     };
 
     const hasWon = checkForWin();
-    // Switch player turn
+    const tie = checkForTie();
 
     if (hasWon) {
-      console.log("lah yn3l jd chi coding");
       board.resetBoard();
+      board.printBoard();
       return;
     }
+
+    if (tie) {
+      board.resetBoard();
+      board.printBoard();
+      return;
+    }
+    // Switch player turn
     switchPlayerTurn();
     printNewRound();
   };
@@ -221,3 +247,11 @@ function GameController(
 }
 
 const game = GameController();
+game.playRound(0, 0);
+game.playRound(0, 1);
+game.playRound(0, 2);
+game.playRound(1, 0);
+game.playRound(1, 2);
+game.playRound(1, 1);
+game.playRound(2, 0);
+game.playRound(2, 2);
