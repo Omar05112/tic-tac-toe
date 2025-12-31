@@ -199,9 +199,9 @@ function GameController(
         const firstElement = board.winningCombos[i][0];
         const secondElement = board.winningCombos[i][1];
         const thirdElement = board.winningCombos[i][2];
-        console.log(
-          `FIRST ELEMENT: ${firstElement}, SECOND ELEMENT: ${secondElement}, THIRD ELEMENT: ${thirdElement} `
-        );
+        // console.log(
+        //   `FIRST ELEMENT: ${firstElement}, SECOND ELEMENT: ${secondElement}, THIRD ELEMENT: ${thirdElement} `
+        // );
         if (
           array[firstElement[0]][firstElement[1]].getValue() ==
             array[secondElement[0]][secondElement[1]].getValue() &&
@@ -231,8 +231,10 @@ function GameController(
       return;
     }
     // Switch player turn
+
     switchPlayerTurn();
     printNewRound();
+
   };
 
   // Initial play game message
@@ -243,15 +245,73 @@ function GameController(
   return {
     playRound,
     getActivePlayer,
+    getBoard: () => board.getBoard(),
   };
 }
 
-const game = GameController();
-game.playRound(0, 0);
-game.playRound(0, 1);
-game.playRound(0, 2);
-game.playRound(1, 0);
-game.playRound(1, 2);
-game.playRound(1, 1);
-game.playRound(2, 0);
-game.playRound(2, 2);
+function ScreenController() {
+  let game;
+  const playerOneLabel = document.getElementById("playerone");
+  const playerTwoLabel = document.getElementById("playertwo");
+  const startGameButton = document.getElementById("startbutton");
+  const playerTurnDiv = document.createElement("div");
+  playerTurnDiv.classList.add("playerturndiv");
+  document.body.appendChild(playerTurnDiv);
+  const boardDiv = document.createElement("div");
+  boardDiv.classList.add("boarddiv");
+  document.body.appendChild(boardDiv);
+  const updateScreen = () => {
+    // // clear the board
+
+    boardDiv.textContent = "";
+
+    // // get the newest version of the board and player turn
+    const board = game.getBoard();
+    const activePlayer = game.getActivePlayer();
+
+    // // Display player's turn
+
+    playerTurnDiv.textContent = `${activePlayer.name}'s turn...`;
+
+    // // Render board squares
+    board.forEach((row, rowindex) => {
+      row.forEach((cell, colindex) => {
+        //     // Anything clickable should be a button!!
+        const cellButton = document.createElement("button");
+        cellButton.classList.add("cell");
+        //     // Create a data attribute to identify the column
+        //     // This makes it easier to pass into our `playRound` function
+        cellButton.dataset.row = rowindex;
+        cellButton.dataset.column = colindex;
+        cellButton.textContent = cell.getValue();
+        boardDiv.appendChild(cellButton);
+      });
+    });
+  };
+
+  startGameButton.addEventListener("click", (e) => {
+    if (playerOneLabel.value !== "" && playerTwoLabel.value !== "") {
+      game = GameController(playerOneLabel.value, playerTwoLabel.value);
+      updateScreen();
+    } else alert("Can't proceed, enter a name for both players");
+  });
+
+  // Add event listener for the board
+  function clickHandlerBoard(e) {
+    const selectedRow = e.target.dataset.row;
+    const selectedColumn = e.target.dataset.column;
+    //   // Make sure I've clicked a row and column
+    if (!selectedColumn || !selectedRow) return;
+
+    game.playRound(selectedRow, selectedColumn);
+    updateScreen();
+  }
+
+
+
+  boardDiv.addEventListener("click", clickHandlerBoard);
+
+  // We don't need to return anything from this module because everything is encapsulated inside this screen controller.
+}
+
+ScreenController();
