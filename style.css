@@ -21,3 +21,8 @@
   background: lightyellow;
   cursor: pointer;
 }
+
+.winmsgclass, .tiemsgclass {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}

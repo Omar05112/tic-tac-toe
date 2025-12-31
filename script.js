@@ -104,8 +104,6 @@ function Gameboard() {
     printBoard,
     resetBoard,
     winningCombos,
-    rows,
-    columns,
   };
 }
 
@@ -179,13 +177,14 @@ function GameController(
 
     invalid = board.placeToken(row, column, getActivePlayer().token);
 
-    if (invalid) return;
+    if (invalid) return { status: invalid };
 
     const checkForTie = () => {
       if (
         board
           .getBoard()
-          .every((row) => row.every((cell) => cell.getValue() != ""))
+          .every((row) => row.every((cell) => cell.getValue() != "")) &&
+        !hasWon
       ) {
         console.log("It's a tie!");
         return true;
@@ -220,21 +219,21 @@ function GameController(
     const tie = checkForTie();
 
     if (hasWon) {
-      board.resetBoard();
+      // board.resetBoard();
       board.printBoard();
-      return;
+      return { status: "won", winner: getActivePlayer().name };
     }
 
     if (tie) {
-      board.resetBoard();
+      // board.resetBoard();
       board.printBoard();
-      return;
+      return { status: "tie" };
     }
     // Switch player turn
 
     switchPlayerTurn();
     printNewRound();
-
+    return { status: "continue" };
   };
 
   // Initial play game message
@@ -251,6 +250,7 @@ function GameController(
 
 function ScreenController() {
   let game;
+  let gameOver = false;
   const playerOneLabel = document.getElementById("playerone");
   const playerTwoLabel = document.getElementById("playertwo");
   const startGameButton = document.getElementById("startbutton");
@@ -292,22 +292,60 @@ function ScreenController() {
   startGameButton.addEventListener("click", (e) => {
     if (playerOneLabel.value !== "" && playerTwoLabel.value !== "") {
       game = GameController(playerOneLabel.value, playerTwoLabel.value);
+      gameOver = false;
       updateScreen();
     } else alert("Can't proceed, enter a name for both players");
   });
 
   // Add event listener for the board
   function clickHandlerBoard(e) {
+    if (gameOver) return;
     const selectedRow = e.target.dataset.row;
     const selectedColumn = e.target.dataset.column;
     //   // Make sure I've clicked a row and column
     if (!selectedColumn || !selectedRow) return;
 
-    game.playRound(selectedRow, selectedColumn);
+    const result = game.playRound(selectedRow, selectedColumn);
+
     updateScreen();
+
+    if (result.status === "won") {
+      const winmsg = document.createElement("div");
+      winmsg.classList.add("winmsgclass");
+      winmsg.textContent = `${result.winner} won!`;
+      document.body.appendChild(winmsg);
+      gameOver = "true";
+      restartButtonFunc();
+    }
+
+    if (result.status === "tie") {
+      const tiemsg = document.createElement("div");
+      tiemsg.classList.add("tiemsgclass");
+      tiemsg.textContent = `It's a tie!`;
+      document.body.appendChild(tiemsg);
+      gameOver = "true";
+      restartButtonFunc();
+    }
   }
 
-
+  function restartButtonFunc() {
+    const guhboard = Gameboard();
+    const restartButton = document.createElement("button");
+    restartButton.classList.add("restartbuttonclass");
+    restartButton.textContent = "Restart";
+    document.body.appendChild(restartButton);
+    restartButton.addEventListener("click", (e) => {
+      const winmsg = document.querySelector(".winmsgclass");
+      const tiemsg = document.querySelector(".tiemsgclass");
+      gameOver = false;
+      if (winmsg) winmsg.remove();
+      if (tiemsg) tiemsg.remove();
+      game = GameController(playerOneLabel.value, playerTwoLabel.value);
+      guhboard.resetBoard();
+      restartButton.remove();
+      updateScreen();
+    });
+  }
 
   boardDiv.addEventListener("click", clickHandlerBoard);
 
